@@ -1198,7 +1198,7 @@ def reproject_dataset(
                     )
 
         # ★追加部分ここから
-        # EPSG:3857への変換する際に、最大のズームレベルにあわせてリサンプリングする
+        # EPSG:3857へ変換する際に、最大のズームレベルにあわせてリサンプリングする
         if options.numerical:
             resampling_method = options.numerical_base_tile_resampling
             maxzoom = options.zoom[1]
