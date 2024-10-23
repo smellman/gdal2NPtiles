@@ -95,7 +95,6 @@ webviewer_list = ("all", "google", "openlayers", "leaflet", "mapml", "none")
 logger = logging.getLogger("gdal2tiles")
 
 # ★追加部分ここから
-# 数値配列をRGB配列に変換する関数
 def numerical_to_rgb(numerical_array, resolution, srcnodata):
     """
     数値配列をRGB配列に変換する関数
@@ -112,7 +111,9 @@ def numerical_to_rgb(numerical_array, resolution, srcnodata):
     rgb_array[mask] = [128, 0, 0]
     
     valid = ~mask
-    x = (numerical_array[valid] / resolution).astype(numpy.int32)
+
+    x = numpy.round(numerical_array[valid] / resolution).astype(numpy.int32)
+    #x = numpy.floor(numerical_array[valid] / resolution).astype(numpy.int32) 地理院タイルと同一にする場合はこちらを使用
     x[x < 0] += 2**24
     
     rgb_array[valid, 0] = (x >> 16) & 255
@@ -121,7 +122,6 @@ def numerical_to_rgb(numerical_array, resolution, srcnodata):
     
     return rgb_array
 
-# RGB配列を数値配列に変換する関数
 def rgb_to_numerical(rgb_array, resolution, srcnodata):
     """
     RGB配列を数値配列に変換する関数
@@ -1211,7 +1211,8 @@ def reproject_dataset(
                 resampleAlg=resampling_method,
                 yRes=resolution,
                 xRes=resolution,
-                format='VRT'
+                format='VRT',
+                targetAlignedPixels=True
             )
             to_dataset = gdal.Warp('', from_dataset, options=warp_options)
 
@@ -1824,7 +1825,7 @@ def create_overview_tile(
         # メモリドライバを使用して、指定されたサイズ（tile_size x tile_size）と
         # 1バンドで新しい画像（作業用）を作成（1バンド）。
         dsquery2 = mem_driver.Create(
-            "", 2 * tile_job_info.tile_size, 2 * tile_job_info.tile_size, 1, gdal.GDT_Float32
+            "", 2 * tile_job_info.tile_size, 2 * tile_job_info.tile_size, 1, gdal.GDT_Int32
         )
         # dsquery2のバンド1に無効値を設定
         dsquery2.GetRasterBand(1).SetNoDataValue(options.numerical_srcnodata)
@@ -1837,8 +1838,8 @@ def create_overview_tile(
         # 3つの配列を1つの3D配列に結合
         rgb_array = numpy.stack((r_band, g_band, b_band), axis=-1)
 
-        # 標高データに変換
-        numerical_array = rgb_to_numerical(rgb_array, options.numerical_resolution, options.numerical_srcnodata)
+        # 標高データに変換（浮動小数点の演算による誤差を避けるため、resolution=1で変換するため、resolutinの逆数倍の値に変換される）
+        numerical_array = rgb_to_numerical(rgb_array, 1, options.numerical_srcnodata)
     
         # 結果をdsquery2に書き込み
         dsquery2.GetRasterBand(1).WriteArray(numerical_array, 0, 0)
@@ -1849,7 +1850,7 @@ def create_overview_tile(
     if options.numerical:
         # メモリドライバを使用して新しい画像（作業用）を作成（1バンド、タイル１個分のサイズ）。
         dsquery3 = mem_driver.Create(
-            "", tile_job_info.tile_size, tile_job_info.tile_size, 1, gdal.GDT_Float32
+            "", tile_job_info.tile_size, tile_job_info.tile_size, 1, gdal.GDT_Int32
         )
 
         # dsquery3のバンド1に無効値を設定
@@ -1858,7 +1859,9 @@ def create_overview_tile(
 
         # dsquery3のバンド1のデータから、dstileに変換
         data = dsquery3.GetRasterBand(1).ReadAsArray()
-        rgb_array = numerical_to_rgb(data, options.numerical_resolution, options.numerical_srcnodata)
+
+        # 標高データをRGBに変換（rgb_to_numericalにおいてresolution=1で変換したため、ここでもresolution=1で変換する）
+        rgb_array = numerical_to_rgb(data, 1, options.numerical_srcnodata)
         
         # RGBデータをdstileに書き込む
         for i in range(3):
