@@ -12,13 +12,13 @@ gdal2tiles.pyを拡張して、数値PNGタイルを生成できるようにし�
 
 数値PNGタイルの画素のRGB値（R, G, B = 0～255）から数値hを取得する方法
 
-x = 2 `<sup>`16 `</sup>`R + 2 `<sup>`8 `</sup>`G + B
+x = 2<sup>16 </sup>R + 2<sup>8</sup>G + B
 
 数値の分解能をuとして:
 
-- x < 2 `<sup>`23 `</sup>`の場合: h = xu
-- x = 2 `<sup>`23 `</sup>`の場合: h = NA
-- x > 2 `<sup>`23 `</sup>`の場合: h = (x-2 `<sup>`24 `</sup>`)u
+- x < 2<sup>23</sup>の場合: h = xu
+- x = 2<sup>23</sup>の場合: h = NA
+- x > 2<sup>23</sup>の場合: h = (x-2<sup>24</sup>)u
 
 ※無効値は (R, G, B) = (128, 0, 0)。
 
@@ -30,7 +30,7 @@ https://www.jstage.jst.go.jp/article/geoinformatics/26/4/26_155/_article/-char/j
 
 ## 主な機能
 
-Float32のTIFファイル（VRTファイル含む）から高品質な数値PNGタイルを生成することができます。
+Float32のTIFファイル（VRTファイル含む）から高品質な数値PNGタイル(RGB)を生成することができます。
 
 ## 使用環境
 
@@ -40,7 +40,8 @@ GDALが使える環境が必要です。
 
 ## 使用方法
 
-基本的な使用方法は以下の通りです：
+基本的な使用方法は以下のとおりです。
+
 python gdal2nptiles.py --numerical input_dem.tif output_folder
 
 ### 主なオプション：
