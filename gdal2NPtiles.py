@@ -112,8 +112,8 @@ def numerical_to_rgb(numerical_array, resolution, srcnodata):
     
     valid = ~mask
 
-    x = numpy.round(numerical_array[valid] / resolution).astype(numpy.int32)
-    #x = numpy.floor(numerical_array[valid] / resolution).astype(numpy.int32) 地理院タイルと同一にする場合はこちらを使用
+    #x = numpy.round(numerical_array[valid] / resolution).astype(numpy.int32)
+    x = numpy.floor(numerical_array[valid] / resolution).astype(numpy.int32) # 地理院タイルと同一にする場合はこちらを使用
     x[x < 0] += 2**24
     
     rgb_array[valid, 0] = (x >> 16) & 255
